@@ -1,0 +1,25 @@
+CustomSearch for RT
+
+Copyright 2009, Egil Möller, FreeCode AS <egil.moller@freecode.no>
+Licensed under the GPL, version 2, as the rest of RT.
+Tested with RT 3.8.2.
+
+CustomSearch allows you to customize the default search and formatting
+of the queue views reachable from the "QuickSearch" box in "RT at a
+glance".
+
+To use this extension, you need to create to custom fields that both
+applies to queues called "CustomSearch" and "CustomFormat". You then
+need to enable these under Global/Custom fields/Queues.
+
+When this is done, you can create a custom search for a queue the
+usual way. Then click on "Advanced" and copy the values in the "query"
+and "format" fields.
+
+Then edit the queue and paste these values into the two custom fields.
+When this is done, that search will be used whenever you click on the
+queue name in the QuickSearch box.
+
+
+NOTE: The CustomSearch query is currently appended to the default
+query - it does not replace that query.

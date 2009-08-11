@@ -1,0 +1,81 @@
+diff -r -u rt3.redhog.2009-07-21T10:02:20/share/html/Elements/QueueSummary rt3.redhog.2009-07-22T12:10:56/share/html/Elements/QueueSummary
+--- rt3.redhog.2009-07-21T10:02:20/share/html/Elements/QueueSummary	2009-03-25 14:25:09.000000000 +0000
++++ rt3.redhog.2009-07-22T12:10:56/share/html/Elements/QueueSummary	2009-07-22 12:05:05.000000000 +0000
+@@ -45,6 +45,7 @@
+ %# those contributions and any derivatives thereof.
+ %# 
+ %# END BPS TAGGED BLOCK }}}
++
+ <table border="0" cellspacing="0" cellpadding="1" width="100%" class="queue-summary">
+ <tr>
+        <th class="collection-as-table"><&|/l&>Queue</&></th>
+@@ -52,40 +53,59 @@
+        <th class="collection-as-table"><% $condition->{name} %></th>
+ % }
+ </tr>
++
+ % my $i;
+ % for my $queue (@queues) {
+ %   $i++;
+-%   my $name = $queue->{Name};
++
++%   my $custom_format = $queue->FirstCustomFieldValue("CustomFormat");
++%   my $custom_cond = $queue->FirstCustomFieldValue("CustomSearch");
++
++%   my $name = $queue->Name;
+ %   $name =~ s/'/\\'/g;
++
+ %   my $queue_cond = "Queue = '$name' AND ";
++%   if ($custom_cond) {
++%     $queue_cond = $queue_cond . $custom_cond . " AND ";
++%   }
+ %   my $all_q = $queue_cond . '(' . join( " OR ", map "Status = '$_'", RT::Queue->ActiveStatusArray()) . ')';
++
++%   if ($custom_format) {
++%     $custom_format = "Format=" . uri_escape($custom_format) . "&";
++%   }
++
++%   my $url = RT->Config->Get('WebPath') . "/Search/Results.html?" . $custom_format ;
++
+ <tr class="<% $i%2 ? 'oddline' : 'evenline'%>" >
+-<td><a href="<% RT->Config->Get('WebPath') %>/Search/Results.html?Query=<% $all_q |u,n %>" title="<% $queue->{Description} %>"><% $queue->{Name} %></a></td>
++<td><a href="<% $url %>Query=<% $all_q |u,n %>" title="<% $queue->Description %>"><% $queue->Name %></a></td>
++
+ %   for my $condition (@$conditions) {
+-%       $Tickets->FromSQL( "Queue = $queue->{id} AND ". $condition->{cond} );
+-<td align="right"><a href="<% RT->Config->Get('WebPath') %>/Search/Results.html?Query=<% $queue_cond.$condition->{cond} |u,n %>"><% $Tickets->Count %></a></td>
++%       $Tickets->FromSQL( "Queue = " . $queue->Id . " AND ". $condition->{cond} );
++
++<td align="right"><a href="<% $url %>Query=<% $queue_cond.$condition->{cond} |u,n %>"><% $Tickets->Count() %></a></td>
+ %   }
+ </tr>
+ % }
++
+ </table>
++
+ <%INIT>
++use URI::Escape;
++
+ my @queues;
+ 
+ if ($cache && exists $session{$cache}) {
+     @queues = @{$session{$cache}};
+ }
+-else {
++else
++ {
+     my $Queues = RT::Queues->new($session{'CurrentUser'});
+     $Queues->UnLimit();
+     @queues = grep $queue_filter->($_), @{$Queues->ItemsArrayRef};
+ 
+     $m->callback( CallbackName => 'Filter', Queues => \@queues );
+ 
+-    @queues = map { {
+-        id          => $_->Id,
+-        Name        => $_->Name,
+-        Description => $_->Description,
+-    } } grep $_, @queues;
++    @queues = grep $_, @queues;
+ 
+     $session{$cache} = \@queues if $cache;
+ }
